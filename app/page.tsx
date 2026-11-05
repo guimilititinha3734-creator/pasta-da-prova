@@ -12,7 +12,7 @@ import { criarTurma, entrarTurma } from "./acoes";
 export default async function Inicio() {
   const { supabase, user } = await exigirLogin();
 
-  const [{ data: perfil }, { data: vinculos }, { data: proximas }] = await Promise.all([
+  const [{ data: perfil }, { data: vinculos }, { data: proximas }, { data: souAdminApp }] = await Promise.all([
     supabase.from("profiles").select("nome, avatar_url").eq("id", user.id).single(),
     supabase
       .from("turma_membros")
@@ -26,6 +26,7 @@ export default async function Inicio() {
       .gte("data", hojeISO())
       .order("data")
       .limit(5),
+    supabase.rpc("eh_admin_app"), // mostra o atalho do painel só para o dono do app
   ]);
 
   const nome = perfil?.nome || user.email || "Estudante";
@@ -36,9 +37,19 @@ export default async function Inicio() {
       <Cabecalho
         titulo="Pasta da Prova"
         direita={
-          <Link href="/perfil" aria-label="Meu perfil" className="rounded-full ring-vinho-200 hover:ring-2">
-            <Avatar nome={nome} url={perfil?.avatar_url} tamanho={34} />
-          </Link>
+          <div className="flex items-center gap-2">
+            {souAdminApp === true && (
+              <Link
+                href="/admin"
+                className="rounded-full bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-700"
+              >
+                ⚙️ Admin
+              </Link>
+            )}
+            <Link href="/perfil" aria-label="Meu perfil" className="rounded-full ring-vinho-200 hover:ring-2">
+              <Avatar nome={nome} url={perfil?.avatar_url} tamanho={34} />
+            </Link>
+          </div>
         }
       />
 

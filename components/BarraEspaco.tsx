@@ -2,13 +2,21 @@
 // Cada turma tem a sua cota ("armário"), separada das outras turmas.
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarBytes } from "@/lib/midia";
+import { dataCurta, diasAte } from "@/lib/datas";
 
 export async function BarraEspaco({ turmaId }: { turmaId: string }) {
   const supabase = await criarClienteServidor();
   const { data, error } = await supabase.rpc("espaco_da_turma", { p_turma: turmaId });
   if (error) return null; // ex.: SQL da etapa 5 ainda não rodado
 
-  const { usado, cota } = data as { usado: number; cota: number };
+  const { usado, cota, plano, plano_ate } = data as {
+    usado: number;
+    cota: number;
+    plano?: string | null;
+    plano_ate?: string | null;
+    vencido?: boolean;
+  };
+  const planoAtivo = plano && plano_ate && diasAte(plano_ate) >= 0;
 
   if (!cota) {
     return (
@@ -29,7 +37,14 @@ export async function BarraEspaco({ turmaId }: { turmaId: string }) {
   return (
     <div className="cartao space-y-2">
       <div className="flex items-baseline justify-between gap-2 text-sm">
-        <span className="font-semibold text-stone-800">☁️ Espaço da turma</span>
+        <span className="font-semibold text-stone-800">
+          ☁️ Espaço da turma
+          {planoAtivo && (
+            <span className="ml-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+              {plano} até {dataCurta(plano_ate!)}
+            </span>
+          )}
+        </span>
         <span className="text-stone-600">
           {formatarBytes(Number(usado))} de {formatarBytes(Number(cota))} (
           {pct.toFixed(pct < 1 ? 1 : 0).replace(".", ",")}%)
