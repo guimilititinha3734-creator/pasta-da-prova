@@ -142,7 +142,7 @@ export default async function PaginaProva({ params }: { params: Promise<{ id: st
           );
         })}
 
-        <BarraEspaco />
+        <BarraEspaco turmaId={prova.turma_id} />
 
         {podeApagar && (
           <form action={apagarProva}>

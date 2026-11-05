@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { CodigoConvite } from "@/components/CodigoConvite";
 import { FormularioSimples } from "@/components/FormularioSimples";
 import { ListaProvas, type ProvaResumo } from "@/components/ListaProvas";
+import { BarraEspaco } from "@/components/BarraEspaco";
 import { criarGrupo, sairDaTurma, trocarCodigo } from "@/app/acoes";
 
 export default async function PaginaTurma({ params }: { params: Promise<{ id: string }> }) {
@@ -67,6 +68,8 @@ export default async function PaginaTurma({ params }: { params: Promise<{ id: st
             </p>
           )}
         </section>
+
+        <BarraEspaco turmaId={id} />
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Grupos de estudo</h2>

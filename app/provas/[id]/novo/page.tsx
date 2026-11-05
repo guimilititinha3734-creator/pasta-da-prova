@@ -15,14 +15,15 @@ export default async function NovoMaterial({
   const { tipo } = await searchParams;
   const { supabase } = await exigirLogin();
 
-  const { data: prova } = await supabase.from("provas").select("id, nome, materia").eq("id", id).maybeSingle();
+  const { data: prova } = await supabase.from("provas").select("id, nome, materia, turma_id").eq("id", id).maybeSingle();
   if (!prova) notFound();
 
-  // Para sugerir aula/tema já usados nesta prova
-  const [{ data: anteriores }, { data: usado }] = await Promise.all([
+  // Aula/tema já usados nesta prova (sugestões) + espaço da TURMA
+  const [{ data: anteriores }, { data: espaco }] = await Promise.all([
     supabase.from("materiais").select("aula_numero, tema").eq("prova_id", id).order("created_at", { ascending: false }),
-    supabase.rpc("espaco_usado"),
+    supabase.rpc("espaco_da_turma", { p_turma: prova.turma_id }),
   ]);
+  const { usado = 0, cota = 0 } = (espaco ?? {}) as { usado?: number; cota?: number };
 
   const temas = [...new Set((anteriores ?? []).map((a) => a.tema).filter(Boolean))] as string[];
   const ultimaAula = (anteriores ?? []).find((a) => a.aula_numero !== null)?.aula_numero ?? null;
@@ -35,7 +36,8 @@ export default async function NovoMaterial({
           provaId={id}
           temasSugeridos={temas}
           ultimaAula={ultimaAula}
-          espacoUsado={Number(usado ?? 0)}
+          espacoUsado={Number(usado)}
+          espacoCota={Number(cota)}
           tipoInicial={tipo}
         />
       </main>

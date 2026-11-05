@@ -49,7 +49,7 @@ Dicas:
 
 | Limite | Valor | O que acontece / o que fazer |
 |---|---|---|
-| Arquivos (Supabase) | **1 GB no total** | A barra "Espaço de arquivos" mostra o uso. Perto de 90%: apague materiais antigos ou use links para vídeos. |
+| Arquivos (Supabase) | **1 GB no total**, dividido em **200 MB por turma** (até 5 turmas) | Cada turma vê a própria barra "Espaço da turma". Turmas criadas depois que o 1 GB foi distribuído ficam com 0 (só anotações e links) até você aumentar a cota delas. Comandos prontos no fim de `supabase/03_espaco_por_turma.sql`. |
 | Tamanho por arquivo | vídeo 25 MB · PDF 20 MB | O app avisa antes de enviar. Vídeos maiores → YouTube (não listado) ou Google Drive. |
 | E-mails de link mágico | ~2 por hora (app inteiro) | Use **Entrar com Google**. |
 | Tráfego (Supabase) | ~5 GB/mês | Vídeos enviados gastam mais; links não gastam. |

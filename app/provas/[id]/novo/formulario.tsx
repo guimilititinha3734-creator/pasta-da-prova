@@ -17,6 +17,10 @@ function idAleatorio() {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+const MSG_SEM_ESPACO =
+  "O espaço de arquivos desta turma acabou. Vocês ainda podem postar anotações e links de vídeo (YouTube/Drive). " +
+  "Para liberar espaço, apaguem materiais antigos ou falem com o responsável pelo app.";
+
 function extensao(nome: string, padrao: string) {
   const ext = nome.split(".").pop()?.toLowerCase();
   return ext && ext.length <= 5 ? ext : padrao;
@@ -27,12 +31,14 @@ export function FormularioMaterial({
   temasSugeridos,
   ultimaAula,
   espacoUsado,
+  espacoCota,
   tipoInicial,
 }: {
   provaId: string;
   temasSugeridos: string[];
   ultimaAula: number | null;
   espacoUsado: number;
+  espacoCota: number; // "armário" da turma (0 = turma sem espaço para arquivos)
   tipoInicial?: string;
 }) {
   const router = useRouter();
@@ -50,7 +56,10 @@ export function FormularioMaterial({
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  const espacoLivre = LIMITES.espacoTotal - espacoUsado;
+  const espacoLivre = Math.max(0, espacoCota - espacoUsado);
+  // Turma sem espaço: só anotações e links de vídeo funcionam
+  const semEspaco = espacoLivre <= 0;
+  const precisaArquivo = aba === "foto" || aba === "pdf" || (aba === "video" && modoVideo === "arquivo");
   const tamanhoTotal = arquivos.reduce((s, a) => s + a.size, 0);
 
   function trocarAba(nova: Aba) {
@@ -125,8 +134,12 @@ export function FormularioMaterial({
       // ---------- ARQUIVOS (fotos, vídeo, PDF) ----------
       else {
         if (!arquivos.length) throw new Error("Escolha um arquivo.");
+        if (semEspaco) throw new Error(MSG_SEM_ESPACO);
         if (tamanhoTotal > espacoLivre && aba !== "foto") {
-          throw new Error("Não há espaço livre suficiente no plano grátis. Use um link ou apague materiais antigos.");
+          throw new Error(
+            `Este arquivo tem ${formatarBytes(tamanhoTotal)}, mas a turma só tem ${formatarBytes(espacoLivre)} livres. ` +
+              "Use um link (YouTube/Drive) ou apaguem materiais antigos.",
+          );
         }
 
         for (let i = 0; i < arquivos.length; i++) {
@@ -157,7 +170,11 @@ export function FormularioMaterial({
           const { error: erroUpload } = await supabase.storage
             .from("materiais")
             .upload(caminho, corpo, { contentType: tipoConteudo, upsert: false });
-          if (erroUpload) throw new Error(`Falha no envio: ${erroUpload.message}`);
+          if (erroUpload) {
+            // O banco recusa o upload quando a turma passou do limite
+            if (/row-level security|violates|unauthorized|403/i.test(erroUpload.message)) throw new Error(MSG_SEM_ESPACO);
+            throw new Error(`Falha no envio: ${erroUpload.message}`);
+          }
 
           const tituloFinal =
             titulo.trim() ||
@@ -363,15 +380,23 @@ export function FormularioMaterial({
         />
       </label>
 
+      {semEspaco && precisaArquivo && (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          ☁️ {MSG_SEM_ESPACO}
+        </p>
+      )}
+
       {erro && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
       {status && <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{status}</p>}
 
-      <button className="botao py-4 text-base" disabled={enviando}>
+      <button className="botao py-4 text-base" disabled={enviando || (semEspaco && precisaArquivo)}>
         {enviando ? "Enviando…" : "Publicar na pasta da prova"}
       </button>
 
       <p className="text-center text-xs text-stone-500">
-        Espaço livre no app: {formatarBytes(Math.max(0, espacoLivre))} de 1 GB
+        {espacoCota > 0
+          ? `Espaço livre da turma: ${formatarBytes(espacoLivre)} de ${formatarBytes(espacoCota)}`
+          : "Esta turma ainda não tem espaço para arquivos (anotações e links liberados)."}
       </p>
     </form>
   );

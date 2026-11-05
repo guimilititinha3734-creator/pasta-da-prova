@@ -5,7 +5,6 @@ import { Cabecalho } from "@/components/Cabecalho";
 import { Avatar } from "@/components/Avatar";
 import { FormularioSimples } from "@/components/FormularioSimples";
 import { Contagem } from "@/components/Contagem";
-import { BarraEspaco } from "@/components/BarraEspaco";
 import { BotaoExemplo } from "@/components/BotaoExemplo";
 import { dataCurta, hojeISO } from "@/lib/datas";
 import { criarTurma, entrarTurma } from "./acoes";
@@ -117,8 +116,6 @@ export default async function Inicio() {
           <h3 className="font-semibold text-stone-900">Criar uma turma nova</h3>
           <FormularioSimples acao={criarTurma} nomeCampo="nome" placeholder="Ex.: Direito 3º sem. Noturno" textoBotao="Criar" />
         </section>
-
-        <BarraEspaco />
 
         <section className="pb-6">
           <BotaoExemplo />

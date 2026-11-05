@@ -2,9 +2,8 @@
 
 export const MB = 1024 * 1024;
 
-/** Limites (o plano grátis do Supabase tem 1 GB no total) */
+/** Limites de tamanho por arquivo (o espaço total é por turma — veja supabase/03) */
 export const LIMITES = {
-  espacoTotal: 1024 * MB, // 1 GB
   video: 25 * MB,
   pdf: 20 * MB,
   fotoLadoMaximo: 1600, // pixels (lado maior depois da compressão)
