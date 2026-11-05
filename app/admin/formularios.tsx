@@ -3,7 +3,7 @@
 // Formulários do painel admin: editar o espaço/plano de uma turma
 // e a configuração geral do app.
 import { useActionState, useState } from "react";
-import { removerPlano, salvarConfig, salvarCotaTurma } from "./acoes";
+import { excluirTurma, removerPlano, salvarConfig, salvarCotaTurma } from "./acoes";
 import type { TurmaAdmin } from "./page";
 
 const MB = 1024 * 1024;
@@ -185,6 +185,44 @@ export function FormConfig({ capacidadeGb, cotaPadraoMb }: { capacidadeGb: numbe
       {estado?.ok && <p className="text-sm text-emerald-700">{estado.ok}</p>}
       <button className="botao" disabled={pendente}>
         {pendente ? "Salvando…" : "Salvar configuração"}
+      </button>
+    </form>
+  );
+}
+
+// Botão de excluir turma: pede para DIGITAR o código, para não apagar sem querer
+export function ExcluirTurma({ turma }: { turma: TurmaAdmin }) {
+  const [estado, executar, pendente] = useActionState(excluirTurma, undefined);
+
+  if (estado?.ok) return <p className="text-sm font-medium text-emerald-700">✓ {estado.ok}</p>;
+
+  return (
+    <form
+      action={executar}
+      onSubmit={(e) => {
+        const digitado = window.prompt(
+          `Excluir "${turma.nome}" PARA SEMPRE?
+
+` +
+            `Vai apagar ${turma.provas} prova(s), ${turma.materiais} material(is), os arquivos e tirar ` +
+            `${turma.membros} pessoa(s) da turma. Não dá para desfazer.
+
+` +
+            `Para confirmar, digite o código da turma: ${turma.codigo}`,
+        );
+        if ((digitado ?? "").trim().toUpperCase() !== turma.codigo) {
+          e.preventDefault();
+          if (digitado !== null) alert("Código diferente. Nada foi apagado.");
+        }
+      }}
+    >
+      <input type="hidden" name="turma_id" value={turma.id} />
+      {estado?.erro && <p className="mb-2 text-sm text-red-700">{estado.erro}</p>}
+      <button
+        disabled={pendente}
+        className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+      >
+        {pendente ? "Excluindo…" : "🗑️ Excluir turma"}
       </button>
     </form>
   );

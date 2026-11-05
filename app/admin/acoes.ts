@@ -54,3 +54,25 @@ export async function salvarConfig(_: EstadoForm, form: FormData): Promise<Estad
   revalidatePath("/admin");
   return { ok: "Configuração salva!" };
 }
+
+// Excluir uma turma inteira: primeiro os arquivos (para liberar espaço
+// de verdade), depois a turma — grupos, provas, materiais e membros vão junto.
+export async function excluirTurma(_: EstadoForm, form: FormData): Promise<EstadoForm> {
+  const turmaId = String(form.get("turma_id"));
+  const { supabase } = await exigirLogin();
+
+  const { data: arquivos, error: erroLista } = await supabase.rpc("admin_arquivos_turma", { p_turma: turmaId });
+  if (erroLista) return { erro: erroLista.message };
+
+  const caminhos = (arquivos ?? []) as string[];
+  for (let i = 0; i < caminhos.length; i += 100) {
+    const { error } = await supabase.storage.from("materiais").remove(caminhos.slice(i, i + 100));
+    if (error) return { erro: `Não consegui apagar os arquivos: ${error.message}` };
+  }
+
+  const { error } = await supabase.rpc("admin_apagar_turma", { p_turma: turmaId });
+  if (error) return { erro: error.message };
+
+  revalidatePath("/admin");
+  return { ok: "Turma excluída." };
+}

@@ -5,7 +5,7 @@ import { exigirLogin } from "@/lib/supabase/server";
 import { Cabecalho } from "@/components/Cabecalho";
 import { formatarBytes } from "@/lib/midia";
 import { dataCurta, diasAte } from "@/lib/datas";
-import { EditorTurma, FormConfig } from "./formularios";
+import { EditorTurma, ExcluirTurma, FormConfig } from "./formularios";
 
 export const metadata = { title: "Admin · Pasta da Prova" };
 
@@ -22,8 +22,20 @@ export type TurmaAdmin = {
   usado: number;
   membros: number;
   provas: number;
+  materiais?: number;
   criador: string | null;
+  ultima_atividade?: string;
 };
+
+// Dias desde a última atividade da turma
+function diasParado(iso?: string) {
+  if (!iso) return 0;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+}
+// "Abandonada": ninguém na turma, ou nada acontece há 30+ dias
+function abandonada(t: TurmaAdmin) {
+  return t.membros === 0 || diasParado(t.ultima_atividade) >= 30;
+}
 
 type Painel = {
   config: { capacidade: number; cota_padrao: number };
@@ -49,6 +61,7 @@ export default async function PaginaAdmin() {
 
   const pctAlocado = Math.min(100, (resumo.alocado / config.capacidade) * 100);
   const pctUsado = Math.min(100, (resumo.usado_total / config.capacidade) * 100);
+  const qtdAbandonadas = turmas.filter(abandonada).length;
   const vagasGratis = Math.max(
     0,
     Math.floor((config.capacidade - resumo.alocado) / Math.max(1, config.cota_padrao)),
@@ -107,8 +120,15 @@ export default async function PaginaAdmin() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
             Turmas ({turmas.length})
           </h2>
+          {qtdAbandonadas > 0 && (
+            <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              🕸️ {qtdAbandonadas} {qtdAbandonadas === 1 ? "turma parece abandonada" : "turmas parecem abandonadas"}{" "}
+              (sem ninguém ou sem atividade há 30+ dias). Elas aparecem primeiro, com o selo 🕸️. Excluir libera o
+              espaço delas para turmas novas.
+            </p>
+          )}
 
-          {turmas.map((t) => {
+          {[...turmas].sort((a, b) => Number(abandonada(b)) - Number(abandonada(a))).map((t) => {
             const pct = t.cota_efetiva ? Math.min(100, (t.usado / t.cota_efetiva) * 100) : 100;
             const vencido = !!t.plano_ate && diasAte(t.plano_ate) < 0;
             const venceLogo = !!t.plano_ate && !vencido && diasAte(t.plano_ate) <= 15;
@@ -121,6 +141,15 @@ export default async function PaginaAdmin() {
                       <span className="font-mono">{t.codigo}</span> · {t.membros}{" "}
                       {t.membros === 1 ? "pessoa" : "pessoas"} · {t.provas} {t.provas === 1 ? "prova" : "provas"}
                       {t.criador && ` · criada por ${t.criador}`}
+                    </p>
+                    <p className={`text-xs ${abandonada(t) ? "font-semibold text-amber-700" : "text-stone-400"}`}>
+                      {abandonada(t) && "🕸️ "}
+                      {t.membros === 0
+                        ? "Sem nenhum membro"
+                        : diasParado(t.ultima_atividade) === 0
+                          ? "Ativa hoje"
+                          : `Última atividade há ${diasParado(t.ultima_atividade)} dia(s)`}
+                      {typeof t.materiais === "number" && ` · ${t.materiais} materiais`}
                     </p>
                   </div>
                   {t.plano ? (
@@ -163,6 +192,8 @@ export default async function PaginaAdmin() {
                     <EditorTurma turma={t} />
                   </div>
                 </details>
+
+                <ExcluirTurma turma={t} />
               </article>
             );
           })}
