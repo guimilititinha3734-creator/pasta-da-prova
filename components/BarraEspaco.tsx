@@ -2,9 +2,10 @@
 // Cada turma tem a sua cota ("armário"), separada das outras turmas.
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { formatarBytes } from "@/lib/midia";
+import Link from "next/link";
 import { dataCurta, diasAte } from "@/lib/datas";
 
-export async function BarraEspaco({ turmaId }: { turmaId: string }) {
+export async function BarraEspaco({ turmaId, semLinkPlanos }: { turmaId: string; semLinkPlanos?: boolean }) {
   const supabase = await criarClienteServidor();
   const { data, error } = await supabase.rpc("espaco_da_turma", { p_turma: turmaId });
   if (error) return null; // ex.: SQL da etapa 5 ainda não rodado
@@ -24,9 +25,13 @@ export async function BarraEspaco({ turmaId }: { turmaId: string }) {
         <p className="text-sm font-semibold text-amber-900">☁️ Esta turma ainda não tem espaço para arquivos</p>
         <p className="text-xs text-amber-800">
           O espaço grátis do app já foi distribuído entre outras turmas. Vocês podem postar normalmente
-          anotações e links de vídeo (YouTube/Drive). Para liberar fotos, vídeos e PDFs, fale com o responsável
-          pelo app.
+          anotações e links de vídeo (YouTube/Drive). Para liberar fotos, vídeos e PDFs, escolham um plano.
         </p>
+        {!semLinkPlanos && (
+          <Link href={`/turmas/${turmaId}/planos`} className="inline-block pt-1 text-sm font-semibold text-vinho-700 underline">
+            Ver planos →
+          </Link>
+        )}
       </div>
     );
   }
@@ -58,6 +63,11 @@ export async function BarraEspaco({ turmaId }: { turmaId: string }) {
           ? "Espaço cheio: apaguem materiais antigos para postar novos arquivos. Anotações e links continuam liberados."
           : "Só desta turma (inclui as provas dos grupos). Fotos são comprimidas; para vídeos, prefiram link do YouTube ou Drive — não gasta espaço."}
       </p>
+      {!semLinkPlanos && (
+        <Link href={`/turmas/${turmaId}/planos`} className="inline-block text-sm font-semibold text-vinho-700 underline">
+          {pct >= 70 ? "Precisa de mais espaço? Ver planos →" : "Ver planos →"}
+        </Link>
+      )}
     </div>
   );
 }

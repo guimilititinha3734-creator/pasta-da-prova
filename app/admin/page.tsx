@@ -5,7 +5,7 @@ import { exigirLogin } from "@/lib/supabase/server";
 import { Cabecalho } from "@/components/Cabecalho";
 import { formatarBytes } from "@/lib/midia";
 import { dataCurta, diasAte } from "@/lib/datas";
-import { EditorTurma, ExcluirTurma, FormConfig } from "./formularios";
+import { EditorTurma, ExcluirTurma, FormConfig, FormContato } from "./formularios";
 
 export const metadata = { title: "Admin · Pasta da Prova" };
 
@@ -57,6 +57,7 @@ export default async function PaginaAdmin() {
   // O banco recusa quem não é admin — para os outros, a página "não existe"
   const { data, error } = await supabase.rpc("admin_painel");
   if (error || !data) notFound();
+  const { data: whatsapp } = await supabase.rpc("contato_vendas");
   const { config, resumo, turmas } = data as Painel;
 
   const pctAlocado = Math.min(100, (resumo.alocado / config.capacidade) * 100);
@@ -113,6 +114,21 @@ export default async function PaginaAdmin() {
               <FormConfig capacidadeGb={config.capacidade / 1024 ** 3} cotaPadraoMb={config.cota_padrao / 1024 ** 2} />
             </div>
           </details>
+        </section>
+
+        {/* VENDAS */}
+        <section className="cartao space-y-3">
+          <h2 className="font-bold text-stone-900">💰 Planos e vendas</h2>
+          {!whatsapp && (
+            <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              Configure seu WhatsApp para o botão &quot;Quero este plano&quot; aparecer para as turmas.
+            </p>
+          )}
+          <FormContato atual={(whatsapp as string | null) ?? null} />
+          <p className="text-xs text-stone-500">
+            Quando uma turma pagar: abra o cartão dela abaixo → ✏️ Alterar espaço / plano → toque no plano vendido →
+            Salvar.
+          </p>
         </section>
 
         {/* TURMAS */}

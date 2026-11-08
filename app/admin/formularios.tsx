@@ -3,7 +3,8 @@
 // Formulários do painel admin: editar o espaço/plano de uma turma
 // e a configuração geral do app.
 import { useActionState, useState } from "react";
-import { excluirTurma, removerPlano, salvarConfig, salvarCotaTurma } from "./acoes";
+import { excluirTurma, removerPlano, salvarConfig, salvarContato, salvarCotaTurma } from "./acoes";
+import { formatarPreco, MESES_POR_PLANO, PLANOS } from "@/lib/planos";
 import type { TurmaAdmin } from "./page";
 
 const MB = 1024 * 1024;
@@ -37,11 +38,38 @@ export function EditorTurma({ turma }: { turma: TurmaAdmin }) {
   const [unidade, setUnidade] = useState<"MB" | "GB">(inicial.unidade);
   const [comPlano, setComPlano] = useState(!!turma.plano);
   const [planoAte, setPlanoAte] = useState(turma.plano_ate ?? daquiA(6));
+  const [nomePlano, setNomePlano] = useState(turma.plano ?? "");
 
   return (
     <div className="space-y-3">
       <form action={executar} className="space-y-3">
         <input type="hidden" name="turma_id" value={turma.id} />
+
+        {/* Atalho: liberar um plano vendido com 1 clique (depois é só Salvar) */}
+        <div className="space-y-1">
+          <span className="text-sm font-medium text-stone-700">Liberar plano vendido</span>
+          <div className="flex flex-wrap gap-1.5">
+            {PLANOS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  setValor(String(p.bytes / GB));
+                  setUnidade("GB");
+                  setComPlano(true);
+                  setNomePlano(p.nome);
+                  setPlanoAte(daquiA(MESES_POR_PLANO));
+                }}
+                className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200"
+              >
+                {p.nome} · {formatarPreco(p.preco)}
+              </button>
+            ))}
+          </div>
+          <span className="block text-xs text-stone-500">
+            Preenche tudo com {MESES_POR_PLANO} meses a partir de hoje. Confira e toque em Salvar.
+          </span>
+        </div>
 
         <div className="space-y-1">
           <span className="text-sm font-medium text-stone-700">Espaço da turma</span>
@@ -102,7 +130,8 @@ export function EditorTurma({ turma }: { turma: TurmaAdmin }) {
               <span className="text-sm text-stone-700">Nome do plano</span>
               <input
                 name="plano_nome"
-                defaultValue={turma.plano ?? `Pro ${valor} ${unidade}`}
+                value={nomePlano}
+                onChange={(e) => setNomePlano(e.target.value)}
                 placeholder="Ex.: Pro 10 GB"
                 className="campo"
               />
@@ -223,6 +252,33 @@ export function ExcluirTurma({ turma }: { turma: TurmaAdmin }) {
         className="w-full rounded-xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
       >
         {pendente ? "Excluindo…" : "🗑️ Excluir turma"}
+      </button>
+    </form>
+  );
+}
+
+export function FormContato({ atual }: { atual: string | null }) {
+  const [estado, executar, pendente] = useActionState(salvarContato, undefined);
+  return (
+    <form action={executar} className="space-y-2">
+      <label className="block space-y-1">
+        <span className="text-sm font-medium text-stone-700">WhatsApp que recebe os pedidos de plano</span>
+        <input
+          name="whatsapp"
+          type="tel"
+          inputMode="tel"
+          defaultValue={atual ? `+${atual}` : ""}
+          placeholder="(11) 91234-5678"
+          className="campo"
+        />
+        <span className="block text-xs text-stone-500">
+          Aparece para as turmas no botão &quot;Quero este plano&quot;. Deixe vazio para esconder o botão.
+        </span>
+      </label>
+      {estado?.erro && <p className="text-sm text-red-700">{estado.erro}</p>}
+      {estado?.ok && <p className="text-sm text-emerald-700">{estado.ok}</p>}
+      <button className="botao" disabled={pendente}>
+        {pendente ? "Salvando…" : "Salvar WhatsApp"}
       </button>
     </form>
   );

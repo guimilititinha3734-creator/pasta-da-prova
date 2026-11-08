@@ -76,3 +76,11 @@ export async function excluirTurma(_: EstadoForm, form: FormData): Promise<Estad
   revalidatePath("/admin");
   return { ok: "Turma excluída." };
 }
+
+export async function salvarContato(_: EstadoForm, form: FormData): Promise<EstadoForm> {
+  const { supabase } = await exigirLogin();
+  const { error } = await supabase.rpc("admin_definir_contato", { p_whatsapp: String(form.get("whatsapp") ?? "") });
+  if (error) return { erro: error.message };
+  revalidatePath("/admin");
+  return { ok: "WhatsApp salvo! O botão de pedir plano já usa este número." };
+}

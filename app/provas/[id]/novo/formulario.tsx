@@ -19,7 +19,7 @@ function idAleatorio() {
 
 const MSG_SEM_ESPACO =
   "O espaço de arquivos desta turma acabou. Vocês ainda podem postar anotações e links de vídeo (YouTube/Drive). " +
-  "Para liberar espaço, apaguem materiais antigos ou falem com o responsável pelo app.";
+  "Para liberar espaço, apaguem materiais antigos ou vejam os planos da turma (na página da turma → Ver planos).";
 
 function extensao(nome: string, padrao: string) {
   const ext = nome.split(".").pop()?.toLowerCase();
