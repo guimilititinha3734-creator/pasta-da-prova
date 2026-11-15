@@ -23,13 +23,14 @@ export type ItemEstudo = {
   comentarios: number;
 };
 
-type Filtro = "todos" | "foto" | "video" | "pdf" | "nota";
+type Filtro = "todos" | "foto" | "video" | "pdf" | "link" | "nota";
 
 const FILTROS: { id: Filtro; rotulo: string }[] = [
   { id: "todos", rotulo: "Tudo" },
   { id: "foto", rotulo: "📷 Fotos" },
   { id: "video", rotulo: "🎬 Vídeos" },
   { id: "pdf", rotulo: "📄 PDFs" },
+  { id: "link", rotulo: "🌐 Links" },
   { id: "nota", rotulo: "📝 Anotações" },
 ];
 

@@ -6,9 +6,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { criarClienteNavegador } from "@/lib/supabase/client";
 import { comprimirFoto } from "@/lib/comprimir";
-import { ehLinkDeVideoValido, formatarBytes, INFO_TIPO, LIMITES, linkParaEmbed } from "@/lib/midia";
+import { dominio, ehLinkDeVideoValido, formatarBytes, INFO_TIPO, LIMITES, linkParaEmbed } from "@/lib/midia";
 
-type Aba = "foto" | "video" | "pdf" | "nota";
+type Aba = "foto" | "video" | "pdf" | "link" | "nota";
 type ModoVideo = "link" | "arquivo";
 
 function idAleatorio() {
@@ -43,7 +43,7 @@ export function FormularioMaterial({
 }) {
   const router = useRouter();
   const [aba, setAba] = useState<Aba>(
-    (["foto", "video", "pdf", "nota"] as const).find((t) => t === tipoInicial) ?? "foto",
+    (["foto", "video", "pdf", "link", "nota"] as const).find((t) => t === tipoInicial) ?? "foto",
   );
   const [modoVideo, setModoVideo] = useState<ModoVideo>("link");
   const [arquivos, setArquivos] = useState<File[]>([]);
@@ -116,6 +116,24 @@ export function FormularioMaterial({
           texto: texto.trim(),
         });
         if (error) throw error;
+      }
+
+      // ---------- LINK (mapa mental, Canva, Docs, site...) ----------
+      else if (aba === "link") {
+        if (!ehLinkDeVideoValido(link.trim())) throw new Error("Cole um link válido (começando com https://).");
+        const { error } = await supabase.from("materiais").insert({
+          ...base,
+          tipo: "link",
+          titulo: titulo.trim() || dominio(link.trim()),
+          texto: texto.trim(),
+          link_url: link.trim(),
+        });
+        if (error) {
+          if (/check constraint|violates/i.test(error.message)) {
+            throw new Error("O app ainda não aceita links: falta rodar o SQL da etapa 9 no Supabase.");
+          }
+          throw error;
+        }
       }
 
       // ---------- LINK DE VÍDEO ----------
@@ -210,8 +228,8 @@ export function FormularioMaterial({
   return (
     <form onSubmit={enviar} className="space-y-5">
       {/* Abas de tipo */}
-      <div className="grid grid-cols-4 gap-2">
-        {(["foto", "video", "pdf", "nota"] as const).map((t) => (
+      <div className="grid grid-cols-5 gap-1.5">
+        {(["foto", "video", "pdf", "link", "nota"] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -324,6 +342,28 @@ export function FormularioMaterial({
         </div>
       )}
 
+      {/* LINK */}
+      {aba === "link" && (
+        <div className="space-y-2">
+          <input
+            type="url"
+            inputMode="url"
+            placeholder="https://… (mapa mental, Canva, Google Docs, site…)"
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            className="campo"
+          />
+          <p className="text-xs text-stone-500">
+            Para mapas mentais interativos, apresentações, documentos online, sites de jurisprudência etc. Se for do
+            Google Drive/Docs ou Canva, deixe o compartilhamento como <b>&quot;Qualquer pessoa com o link&quot;</b>.
+            Links não gastam o espaço da turma.
+          </p>
+          {link && ehLinkDeVideoValido(link.trim()) && (
+            <p className="rounded-xl bg-stone-100 px-3 py-2 text-sm text-stone-700">🌐 {dominio(link.trim())}</p>
+          )}
+        </div>
+      )}
+
       {/* CAMPOS COMUNS */}
       <label className="block space-y-1">
         <span className="text-sm font-medium text-stone-700">Título {aba !== "nota" && "(opcional)"}</span>
@@ -332,7 +372,13 @@ export function FormularioMaterial({
           onChange={(e) => setTitulo(e.target.value)}
           maxLength={120}
           placeholder={
-            aba === "foto" ? "Ex.: Quadro — poder constituinte" : aba === "nota" ? "Ex.: Resumo da aula" : "Ex.: Explicação do art. 5º"
+            aba === "foto"
+              ? "Ex.: Quadro — poder constituinte"
+              : aba === "nota"
+                ? "Ex.: Resumo da aula"
+                : aba === "link"
+                  ? "Ex.: Mapa mental — controle de constitucionalidade"
+                  : "Ex.: Explicação do art. 5º"
           }
           className="campo"
         />

@@ -36,7 +36,7 @@ export type Material = {
   id: string;
   prova_id: string;
   autor_id: string;
-  tipo: "foto" | "video" | "video_link" | "pdf" | "nota";
+  tipo: "foto" | "video" | "video_link" | "pdf" | "nota" | "link";
   titulo: string;
   aula_numero: number | null;
   tema: string;

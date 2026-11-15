@@ -10,7 +10,7 @@ export const LIMITES = {
   fotoQualidade: 0.75, // 0 a 1 (JPEG)
 };
 
-export type TipoMaterial = "foto" | "video" | "video_link" | "pdf" | "nota";
+export type TipoMaterial = "foto" | "video" | "video_link" | "pdf" | "nota" | "link";
 
 export const INFO_TIPO: Record<TipoMaterial, { rotulo: string; icone: string }> = {
   foto: { rotulo: "Foto", icone: "📷" },
@@ -18,6 +18,7 @@ export const INFO_TIPO: Record<TipoMaterial, { rotulo: string; icone: string }> 
   video_link: { rotulo: "Link de vídeo", icone: "🔗" },
   pdf: { rotulo: "PDF", icone: "📄" },
   nota: { rotulo: "Anotação", icone: "📝" },
+  link: { rotulo: "Link", icone: "🌐" },
 };
 
 export function formatarBytes(bytes: number): string {
@@ -61,5 +62,14 @@ export function ehLinkDeVideoValido(url: string): boolean {
     return u.protocol === "https:" || u.protocol === "http:";
   } catch {
     return false;
+  }
+}
+
+/** Só o "endereço do site" de um link, para mostrar (ex.: "miro.com") */
+export function dominio(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
   }
 }

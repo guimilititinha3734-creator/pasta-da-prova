@@ -71,7 +71,7 @@ export default async function PaginaMaterial({ params }: { params: Promise<{ id:
 
           <ConteudoMaterial m={m} url={url} />
 
-          {m.tipo !== "nota" && m.tipo !== "video_link" && m.texto && (
+          {m.tipo !== "nota" && m.tipo !== "video_link" && m.tipo !== "link" && m.texto && (
             <p className="whitespace-pre-line text-stone-700">{m.texto}</p>
           )}
 

@@ -1,7 +1,7 @@
 // Mostra o conteúdo de um material conforme o tipo
 // (foto, vídeo, link do YouTube/Drive, PDF ou anotação)
 import Link from "next/link";
-import { linkParaEmbed } from "@/lib/midia";
+import { dominio, linkParaEmbed } from "@/lib/midia";
 import type { Material } from "@/lib/tipos";
 
 export function ConteudoMaterial({
@@ -75,6 +75,36 @@ export function ConteudoMaterial({
           <span className="text-stone-400">↗</span>
         </a>
         {m.texto && <p className="whitespace-pre-line text-sm text-stone-700">{m.texto}</p>}
+      </div>
+    );
+  }
+
+  if (m.tipo === "link" && m.link_url) {
+    return (
+      <div className="space-y-2">
+        <a
+          href={m.link_url}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 p-3 hover:bg-stone-100"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(dominio(m.link_url))}&sz=64`}
+            alt=""
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0 rounded"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-stone-800">Abrir link</span>
+            <span className="block truncate text-xs text-stone-500">{dominio(m.link_url)}</span>
+          </span>
+          <span className="text-stone-400">↗</span>
+        </a>
+        {m.texto && (
+          <p className={`whitespace-pre-line text-sm text-stone-700 ${resumido ? "line-clamp-3" : ""}`}>{m.texto}</p>
+        )}
       </div>
     );
   }
